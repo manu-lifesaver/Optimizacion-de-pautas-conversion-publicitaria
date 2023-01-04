@@ -1,0 +1,40 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, roc_auc_score
+
+def optimize_advertising(data_path):
+    # Cargar y preparar los datos
+    df = pd.read_csv(data_path)
+    df = df.dropna()
+    X = df.drop(['conversion'], axis=1)
+    y = df['conversion']
+
+    # Dividir los datos en un conjunto de entrenamiento y un conjunto de prueba
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+    # Entrenar el modelo
+    model = RandomForestClassifier(n_estimators=100)
+    model.fit(X_train, y_train)
+
+    # Hacer predicciones en el conjunto de prueba
+    predictions = model.predict(X_test)
+
+    # Evaluar el rendimiento del modelo con diferentes métricas
+    accuracy = accuracy_score(y_test, predictions)
+    auc = roc_auc_score(y_test, predictions)
+    print(f'El modelo tiene una precisión del {accuracy:.2f} y un AUC del {auc:.2f}')
+
+    # Usar validación cruzada para obtener una evaluación más precisa del modelo
+    scores = cross_val_score(model, X, y, cv=5)
+    print(f'La validación cruzada muestra una precisión promedio del {scores.mean():.2f} con una desviación estándar del {scores.std():.2f}')
+
+    # Hacer recomendaciones
+    importances = model.feature_importances_
+    recommendations = []
+    for i, importance in enumerate(importances):
+        if importance > 0.1:
+            recommendations.append(X.columns[i])
+    print(f'Se recomienda cambiar o prestar más atención a: {recommendations}')
+
+optimize_advertising('publicidad.csv')
